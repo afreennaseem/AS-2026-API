@@ -1,0 +1,5 @@
+[
+  { "id": 1, "name": "Wireless Mouse",      "price": 25.0,  "stock": 50 },
+  { "id": 2, "name": "Mechanical Keyboard", "price": 80.0,  "stock": 30 },
+  { "id": 3, "name": "USB-C Monitor",       "price": 200.0, "stock": 10 }
+]

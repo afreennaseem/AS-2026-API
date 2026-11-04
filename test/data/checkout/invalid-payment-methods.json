@@ -1,0 +1,10 @@
+{
+  "user": "carol",
+  "cart": [{ "productId": 3, "quantity": 1 }],
+  "expected": { "status": 400, "error": "paymentMethod must be 'cash' or 'credit_card'" },
+  "cases": [
+    { "partition": "EP3", "title": "string outside the allowed set is rejected", "body": { "paymentMethod": "cash " } },
+    { "partition": "EP4", "title": "non-string value is rejected",               "body": { "paymentMethod": false } },
+    { "partition": "EP5", "title": "missing paymentMethod field is rejected",     "body": {} }
+  ]
+}

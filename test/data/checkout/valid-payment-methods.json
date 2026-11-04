@@ -1,0 +1,24 @@
+[
+  {
+    "partition": "EP1 + EP6",
+    "title": "cash payment applies a 10% discount on the subtotal",
+    "user": "alice",
+    "paymentMethod": "cash",
+    "cart": [
+      { "productId": 1, "quantity": 2 },
+      { "productId": 3, "quantity": 5 },
+      { "productId": 2, "quantity": 5 }
+    ],
+    "expected": { "status": 201, "discountRate": 0.1, "subtotal": 1450, "discount": 145, "total": 1305 }
+  },
+  {
+    "partition": "EP2 + EP6",
+    "title": "credit_card payment applies no discount",
+    "user": "bob",
+    "paymentMethod": "credit_card",
+    "cart": [
+      { "productId": 2, "quantity": 2 }
+    ],
+    "expected": { "status": 201, "discountRate": 0, "subtotal": 160, "discount": 0, "total": 160 }
+  }
+]

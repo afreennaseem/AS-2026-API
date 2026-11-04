@@ -1,0 +1,28 @@
+{
+  "name": "ecommerce-checkout-api",
+  "version": "1.0.0",
+  "description": "E-commerce checkout REST API built with Express (in-memory database)",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/afreennaseem/AS-2026-API.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/afreennaseem/AS-2026-API/issues"
+  },
+  "homepage": "https://github.com/afreennaseem/AS-2026-API#readme",
+  "dependencies": {
+    "express": "^5.3.0",
+    "js-yaml": "^5.5.0",
+    "jsonwebtoken": "^9.0.3",
+    "swagger-ui-express": "^5.0.1"
+  },
+  "private": true
+}

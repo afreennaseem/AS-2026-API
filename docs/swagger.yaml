@@ -1,0 +1,239 @@
+openapi: 3.0.3
+info:
+  title: E-commerce Checkout API
+  description: |
+    Simple e-commerce REST API with four endpoints: Register, Login, Cart and Checkout.
+    Data is stored in memory and reset whenever the server restarts.
+
+    **Business rule:** paying with `cash` gives a 10% discount; paying with `credit_card` gives no discount.
+  version: 1.0.0
+servers:
+  - url: http://localhost:3000/api
+    description: Local server
+
+tags:
+  - name: Auth
+  - name: Cart
+  - name: Checkout
+
+paths:
+  /register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '409':
+          description: Email already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /login:
+    post:
+      tags: [Auth]
+      summary: Log in and receive a JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Get the logged-in user's cart
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    post:
+      tags: [Cart]
+      summary: Add a product to the cart
+      description: Adding a product that is already in the cart increases its quantity.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddToCartRequest'
+      responses:
+        '200':
+          description: Updated cart
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cart'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '404':
+          description: Product not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /checkout:
+    post:
+      tags: [Checkout]
+      summary: Check out the current cart
+      description: |
+        Creates an order from the cart, reduces product stock and empties the cart.
+        - `cash`: 10% discount on the subtotal
+        - `credit_card`: no discount
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CheckoutRequest'
+      responses:
+        '201':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Missing, invalid or expired token
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name: { type: string, example: Dave Brown }
+        email: { type: string, format: email, example: dave@example.com }
+        password: { type: string, example: dave123 }
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email, example: alice@example.com }
+        password: { type: string, example: alice123 }
+    User:
+      type: object
+      properties:
+        id: { type: integer, example: 1 }
+        name: { type: string, example: Alice Johnson }
+        email: { type: string, example: alice@example.com }
+    LoginResponse:
+      type: object
+      properties:
+        token: { type: string, example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9... }
+        user:
+          $ref: '#/components/schemas/User'
+    AddToCartRequest:
+      type: object
+      required: [productId, quantity]
+      properties:
+        productId: { type: integer, example: 1 }
+        quantity: { type: integer, minimum: 1, example: 2 }
+    CartItem:
+      type: object
+      properties:
+        productId: { type: integer, example: 1 }
+        name: { type: string, example: Wireless Mouse }
+        price: { type: number, example: 25 }
+        quantity: { type: integer, example: 2 }
+        subtotal: { type: number, example: 50 }
+    Cart:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        total: { type: number, example: 50 }
+    CheckoutRequest:
+      type: object
+      required: [paymentMethod]
+      properties:
+        paymentMethod:
+          type: string
+          enum: [cash, credit_card]
+          example: cash
+    Order:
+      type: object
+      properties:
+        orderId: { type: integer, example: 1 }
+        userId: { type: integer, example: 1 }
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        subtotal: { type: number, example: 50 }
+        paymentMethod: { type: string, example: cash }
+        discount: { type: number, example: 5 }
+        total: { type: number, example: 45 }
+        createdAt: { type: string, format: date-time }
+    Error:
+      type: object
+      properties:
+        error: { type: string, example: Error message }

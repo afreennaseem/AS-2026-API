@@ -1,0 +1,78 @@
+name: API Tests
+
+on:
+  # Every push to a branch with an open pull request targeting main
+  pull_request:
+    branches: [main]
+  # Pushes / merges landing directly on main
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: api-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-tests:
+    name: Mocha / SuperTest / Chai
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      PORT: 3001
+      BASE_URL: http://localhost:3001
+      API_PREFIX: /api
+      # The server is started by the pipeline, not by the test run
+      START_SERVER: 'false'
+      JWT_SECRET: ${{ secrets.JWT_SECRET }}
+      ALICE_PASSWORD: ${{ secrets.ALICE_PASSWORD }}
+      BOB_PASSWORD: ${{ secrets.BOB_PASSWORD }}
+      CAROL_PASSWORD: ${{ secrets.CAROL_PASSWORD }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start API server
+        run: |
+          nohup npm start > server.log 2>&1 &
+          echo $! > server.pid
+
+      - name: Wait for API server to be up
+        run: |
+          curl --silent --fail --output /dev/null \
+            --retry 30 --retry-delay 1 --retry-connrefused \
+            "$BASE_URL/swagger.yaml"
+          echo "API is up at $BASE_URL"
+
+      - name: Run API tests
+        run: npm test
+
+      - name: Upload mochawesome report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report
+          path: reports/mochawesome/
+          if-no-files-found: warn
+
+      - name: Upload server log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: server-log
+          path: server.log
+
+      - name: Stop API server
+        if: always()
+        run: kill "$(cat server.pid)" 2>/dev/null || true

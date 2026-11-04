@@ -132,6 +132,10 @@ test/
 └── setup/hooks.js   # global server start/stop + evidence attached to the report
 ```
 
+### CI (GitHub Actions)
+
+[.github/workflows/api-tests.yml](.github/workflows/api-tests.yml) runs on every push to a branch with a pull request targeting `main`, and on pushes to `main`. It starts the API server (`npm start` on port 3001), waits until it responds, runs `npm test` against it with `START_SERVER=false`, and uploads the mochawesome report as the `mochawesome-report` build artifact. Test-user passwords default to the README test data; define repository secrets (`ALICE_PASSWORD`, `BOB_PASSWORD`, `CAROL_PASSWORD`, `JWT_SECRET`) to override them.
+
 ## Project structure
 
 ```

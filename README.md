@@ -113,6 +113,25 @@ With the server running locally on the default port:
 | http://localhost:3000/api/cart | Cart endpoint |
 | http://localhost:3000/api/checkout | Checkout endpoint |
 
+## Automated tests
+
+API tests use **Mocha**, **SuperTest** and **Chai**, with **mochawesome** HTML reports. They cover the checkout discount rule using equivalence partitioning (EP1–EP7).
+
+```bash
+cp .env.example .env   # base URL, test-user passwords, START_SERVER flag
+npm test               # report: reports/mochawesome/checkout-api-report.html
+```
+
+Requires Node.js 20.19+ (Mocha 12). With `START_SERVER=true` the run starts the API in-process on the `BASE_URL` port, so every run uses fresh seed data. With `false`, tests target an already-running API — restart it between runs, since checkout consumes stock.
+
+```
+test/
+├── checkout/        # specs for the checkout module
+├── data/            # data-driven inputs (users, products, checkout cases)
+├── helpers/         # config (dotenv), api (SuperTest), login, cart, checkout, pricing, evidence
+└── setup/hooks.js   # global server start/stop + evidence attached to the report
+```
+
 ## Project structure
 
 ```

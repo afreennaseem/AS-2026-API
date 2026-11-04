@@ -1,0 +1,5 @@
+{
+  "alice": { "id": 1, "name": "Alice Johnson", "email": "alice@example.com", "passwordEnv": "ALICE_PASSWORD" },
+  "bob":   { "id": 2, "name": "Bob Smith",     "email": "bob@example.com",   "passwordEnv": "BOB_PASSWORD" },
+  "carol": { "id": 3, "name": "Carol White",   "email": "carol@example.com", "passwordEnv": "CAROL_PASSWORD" }
+}

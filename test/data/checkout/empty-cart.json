@@ -1,0 +1,9 @@
+[
+  {
+    "partition": "EP7",
+    "title": "checkout of an empty cart is rejected before any discount is computed",
+    "user": "alice",
+    "paymentMethod": "credit_card",
+    "expected": { "status": 400, "error": "Cart is empty" }
+  }
+]

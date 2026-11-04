@@ -132,12 +132,6 @@ test/
 └── setup/hooks.js   # global server start/stop + evidence attached to the report
 ```
 
-### Continuous integration
-
-[.github/workflows/api-tests.yml](.github/workflows/api-tests.yml) runs the suite on GitHub Actions for every push to a branch with a pull request targeting `main`, and for pushes to `main`. It starts the API with `npm start`, waits until it responds, and runs `npm test` with `START_SERVER=false`. The mochawesome report is uploaded as the `mochawesome-report` build artifact.
-
-Required repository secrets (Settings → Secrets and variables → Actions): `ALICE_PASSWORD`, `BOB_PASSWORD`, `CAROL_PASSWORD`. `JWT_SECRET` is optional.
-
 ## Project structure
 
 ```

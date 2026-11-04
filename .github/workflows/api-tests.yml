@@ -1,0 +1,78 @@
+name: API Tests
+
+on:
+  # Runs on every push to a branch that has a pull request targeting main
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  # Runs when changes land on main
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: api-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  api-tests:
+    name: Mocha / SuperTest / Chai
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    env:
+      PORT: 3001
+      BASE_URL: http://localhost:3001
+      API_PREFIX: /api
+      # The pipeline starts the server itself; the test run must not start a second one
+      START_SERVER: 'false'
+      # Workshop test data (see README). Repository secrets override these when defined.
+      JWT_SECRET: ${{ secrets.JWT_SECRET || 'workshop-secret-key' }}
+      ALICE_PASSWORD: ${{ secrets.ALICE_PASSWORD || 'alice123' }}
+      BOB_PASSWORD: ${{ secrets.BOB_PASSWORD || 'bob123' }}
+      CAROL_PASSWORD: ${{ secrets.CAROL_PASSWORD || 'carol123' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Start API server
+        run: nohup npm start > server.log 2>&1 &
+
+      - name: Wait for API server to be up
+        run: |
+          for i in $(seq 1 30); do
+            if curl --silent --fail --output /dev/null "$BASE_URL/swagger.yaml"; then
+              echo "API is up at $BASE_URL"
+              exit 0
+            fi
+            echo "Waiting for API... ($i/30)"
+            sleep 1
+          done
+          echo "API did not start within 30s"
+          cat server.log
+          exit 1
+
+      - name: Run API tests
+        run: npm test
+
+      - name: Upload mochawesome report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochawesome-report
+          path: reports/mochawesome/
+          if-no-files-found: warn
+
+      - name: Show API server log
+        if: always()
+        run: cat server.log || true

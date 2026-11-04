@@ -1,0 +1,1084 @@
+{
+  "meta": {
+    "seed": 788317324,
+    "baseUrl": "http://localhost:3456",
+    "runAt": "2026-11-04T10:31:57.405Z",
+    "node": "v25.2.1"
+  },
+  "partitions": [
+    {
+      "id": "EP1",
+      "input": "paymentMethod",
+      "type": "Valid",
+      "name": "cash",
+      "domain": "{ \"cash\" }",
+      "expected": "201, discount = 10% of subtotal, total = subtotal - discount"
+    },
+    {
+      "id": "EP2",
+      "input": "paymentMethod",
+      "type": "Valid",
+      "name": "credit_card",
+      "domain": "{ \"credit_card\" }",
+      "expected": "201, discount = 0, total = subtotal"
+    },
+    {
+      "id": "EP3",
+      "input": "paymentMethod",
+      "type": "Invalid",
+      "name": "String outside the allowed set",
+      "domain": "any string ∉ { \"cash\", \"credit_card\" }",
+      "expected": "400, no order created, cart kept"
+    },
+    {
+      "id": "EP4",
+      "input": "paymentMethod",
+      "type": "Invalid",
+      "name": "Non-string value",
+      "domain": "number, boolean, null, array, object",
+      "expected": "400, no order created, cart kept"
+    },
+    {
+      "id": "EP5",
+      "input": "paymentMethod",
+      "type": "Invalid",
+      "name": "Field absent",
+      "domain": "request body without paymentMethod",
+      "expected": "400, no order created, cart kept"
+    },
+    {
+      "id": "EP6",
+      "input": "cart subtotal",
+      "type": "Valid",
+      "name": "Subtotal > 0 (non-empty cart)",
+      "domain": "subtotal > 0",
+      "expected": "discount rule is applied (covered by EP1/EP2)"
+    },
+    {
+      "id": "EP7",
+      "input": "cart subtotal",
+      "type": "Invalid",
+      "name": "Subtotal = 0 (empty cart)",
+      "domain": "cart has no items",
+      "expected": "400 \"Cart is empty\", no discount computed"
+    }
+  ],
+  "results": [
+    {
+      "tc": "TC-01",
+      "title": "Cash payment applies 10% discount",
+      "partitions": [
+        "EP1",
+        "EP6"
+      ],
+      "user": "alice",
+      "value": "\"cash\"",
+      "cart": [
+        {
+          "productId": 1,
+          "quantity": 2
+        },
+        {
+          "productId": 3,
+          "quantity": 5
+        },
+        {
+          "productId": 2,
+          "quantity": 5
+        }
+      ],
+      "checks": [
+        {
+          "label": "HTTP status",
+          "expected": 201,
+          "actual": 201,
+          "pass": true
+        },
+        {
+          "label": "subtotal",
+          "expected": 1450,
+          "actual": 1450,
+          "pass": true
+        },
+        {
+          "label": "paymentMethod echoed",
+          "expected": "cash",
+          "actual": "cash",
+          "pass": true
+        },
+        {
+          "label": "discount (10% of 1450)",
+          "expected": 145,
+          "actual": 145,
+          "pass": true
+        },
+        {
+          "label": "total = subtotal - discount",
+          "expected": 1305,
+          "actual": 1305,
+          "pass": true
+        }
+      ],
+      "evidence": [
+        {
+          "step": "Setup: login as alice@example.com",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/login",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "email": "alice@example.com",
+              "password": "alice123"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbGljZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.nfJLVgh8SeYUouDoA0aDB2iPXJ2Tfx0bzUsCyUkVcQE",
+              "user": {
+                "id": 1,
+                "name": "Alice Johnson",
+                "email": "alice@example.com"
+              }
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.324Z",
+          "durationMs": 63
+        },
+        {
+          "step": "Setup: add product 1 x2",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "productId": 1,
+              "quantity": 2
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 1,
+                  "name": "Wireless Mouse",
+                  "price": 25,
+                  "quantity": 2,
+                  "subtotal": 50
+                }
+              ],
+              "total": 50
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.387Z",
+          "durationMs": 3
+        },
+        {
+          "step": "Setup: add product 3 x5",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "productId": 3,
+              "quantity": 5
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 1,
+                  "name": "Wireless Mouse",
+                  "price": 25,
+                  "quantity": 2,
+                  "subtotal": 50
+                },
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 5,
+                  "subtotal": 1000
+                }
+              ],
+              "total": 1050
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.390Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Setup: add product 2 x5",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "productId": 2,
+              "quantity": 5
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 1,
+                  "name": "Wireless Mouse",
+                  "price": 25,
+                  "quantity": 2,
+                  "subtotal": 50
+                },
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 5,
+                  "subtotal": 1000
+                },
+                {
+                  "productId": 2,
+                  "name": "Mechanical Keyboard",
+                  "price": 80,
+                  "quantity": 5,
+                  "subtotal": 400
+                }
+              ],
+              "total": 1450
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.391Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Action: checkout",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/checkout",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "paymentMethod": "cash"
+            }
+          },
+          "response": {
+            "status": 201,
+            "body": {
+              "orderId": 1,
+              "userId": 1,
+              "items": [
+                {
+                  "productId": 1,
+                  "name": "Wireless Mouse",
+                  "price": 25,
+                  "quantity": 2,
+                  "subtotal": 50
+                },
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 5,
+                  "subtotal": 1000
+                },
+                {
+                  "productId": 2,
+                  "name": "Mechanical Keyboard",
+                  "price": 80,
+                  "quantity": 5,
+                  "subtotal": 400
+                }
+              ],
+              "subtotal": 1450,
+              "paymentMethod": "cash",
+              "discount": 145,
+              "total": 1305,
+              "createdAt": "2026-11-04T10:31:57.393Z"
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.392Z",
+          "durationMs": 1
+        }
+      ],
+      "pass": true
+    },
+    {
+      "tc": "TC-02",
+      "title": "Credit card payment applies no discount",
+      "partitions": [
+        "EP2",
+        "EP6"
+      ],
+      "user": "bob",
+      "value": "\"credit_card\"",
+      "cart": [
+        {
+          "productId": 2,
+          "quantity": 2
+        }
+      ],
+      "checks": [
+        {
+          "label": "HTTP status",
+          "expected": 201,
+          "actual": 201,
+          "pass": true
+        },
+        {
+          "label": "subtotal",
+          "expected": 160,
+          "actual": 160,
+          "pass": true
+        },
+        {
+          "label": "paymentMethod echoed",
+          "expected": "credit_card",
+          "actual": "credit_card",
+          "pass": true
+        },
+        {
+          "label": "discount (0% of 160)",
+          "expected": 0,
+          "actual": 0,
+          "pass": true
+        },
+        {
+          "label": "total = subtotal - discount",
+          "expected": 160,
+          "actual": 160,
+          "pass": true
+        }
+      ],
+      "evidence": [
+        {
+          "step": "Setup: login as bob@example.com",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/login",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "email": "bob@example.com",
+              "password": "bob123"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJib2JAZXhhbXBsZS5jb20iLCJpYXQiOjE3OTM3ODgzMTcsImV4cCI6MTc5Mzc5MTkxN30.AYNZu4-nyezOWP9qnFlMDqTT9ZYDPs311leAxozOi50",
+              "user": {
+                "id": 2,
+                "name": "Bob Smith",
+                "email": "bob@example.com"
+              }
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.393Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Setup: add product 2 x2",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "productId": 2,
+              "quantity": 2
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 2,
+                  "name": "Mechanical Keyboard",
+                  "price": 80,
+                  "quantity": 2,
+                  "subtotal": 160
+                }
+              ],
+              "total": 160
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.394Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Action: checkout",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/checkout",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "paymentMethod": "credit_card"
+            }
+          },
+          "response": {
+            "status": 201,
+            "body": {
+              "orderId": 2,
+              "userId": 2,
+              "items": [
+                {
+                  "productId": 2,
+                  "name": "Mechanical Keyboard",
+                  "price": 80,
+                  "quantity": 2,
+                  "subtotal": 160
+                }
+              ],
+              "subtotal": 160,
+              "paymentMethod": "credit_card",
+              "discount": 0,
+              "total": 160,
+              "createdAt": "2026-11-04T10:31:57.395Z"
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.395Z",
+          "durationMs": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "tc": "TC-03",
+      "title": "Unknown payment method string is rejected",
+      "partitions": [
+        "EP3"
+      ],
+      "user": "carol",
+      "value": "\"cash \"",
+      "cart": [
+        {
+          "productId": 3,
+          "quantity": 1
+        }
+      ],
+      "checks": [
+        {
+          "label": "HTTP status",
+          "expected": 400,
+          "actual": 400,
+          "pass": true
+        },
+        {
+          "label": "error message",
+          "expected": "paymentMethod must be 'cash' or 'credit_card'",
+          "actual": "paymentMethod must be 'cash' or 'credit_card'",
+          "pass": true
+        },
+        {
+          "label": "no discount / order in response",
+          "pass": true
+        },
+        {
+          "label": "cart unchanged",
+          "expected": {
+            "items": [
+              {
+                "productId": 3,
+                "name": "USB-C Monitor",
+                "price": 200,
+                "quantity": 1,
+                "subtotal": 200
+              }
+            ],
+            "total": 200
+          },
+          "actual": {
+            "items": [
+              {
+                "productId": 3,
+                "name": "USB-C Monitor",
+                "price": 200,
+                "quantity": 1,
+                "subtotal": 200
+              }
+            ],
+            "total": 200
+          },
+          "pass": true
+        }
+      ],
+      "evidence": [
+        {
+          "step": "Setup: login as carol@example.com",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/login",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "email": "carol@example.com",
+              "password": "carol123"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjYXJvbEBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.SuU009Ge_dW7gdeHDSgADG4eXCVpn5_tup-qZX4M4bY",
+              "user": {
+                "id": 3,
+                "name": "Carol White",
+                "email": "carol@example.com"
+              }
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.396Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Setup: add product 3 x1",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "productId": 3,
+              "quantity": 1
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 1,
+                  "subtotal": 200
+                }
+              ],
+              "total": 200
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.398Z",
+          "durationMs": 0
+        },
+        {
+          "step": "Action: checkout",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/checkout",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "paymentMethod": "cash "
+            }
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "paymentMethod must be 'cash' or 'credit_card'"
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.399Z",
+          "durationMs": 0
+        },
+        {
+          "step": "Verify: cart unchanged after rejected checkout",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 1,
+                  "subtotal": 200
+                }
+              ],
+              "total": 200
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.399Z",
+          "durationMs": 1
+        }
+      ],
+      "pass": true
+    },
+    {
+      "tc": "TC-04",
+      "title": "Non-string payment method is rejected",
+      "partitions": [
+        "EP4"
+      ],
+      "user": "carol",
+      "value": "false",
+      "cart": [
+        {
+          "productId": 3,
+          "quantity": 1
+        }
+      ],
+      "checks": [
+        {
+          "label": "HTTP status",
+          "expected": 400,
+          "actual": 400,
+          "pass": true
+        },
+        {
+          "label": "error message",
+          "expected": "paymentMethod must be 'cash' or 'credit_card'",
+          "actual": "paymentMethod must be 'cash' or 'credit_card'",
+          "pass": true
+        },
+        {
+          "label": "no discount / order in response",
+          "pass": true
+        },
+        {
+          "label": "cart unchanged",
+          "expected": {
+            "items": [
+              {
+                "productId": 3,
+                "name": "USB-C Monitor",
+                "price": 200,
+                "quantity": 1,
+                "subtotal": 200
+              }
+            ],
+            "total": 200
+          },
+          "actual": {
+            "items": [
+              {
+                "productId": 3,
+                "name": "USB-C Monitor",
+                "price": 200,
+                "quantity": 1,
+                "subtotal": 200
+              }
+            ],
+            "total": 200
+          },
+          "pass": true
+        }
+      ],
+      "evidence": [
+        {
+          "step": "Setup: login as carol@example.com",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/login",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "email": "carol@example.com",
+              "password": "carol123"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjYXJvbEBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.SuU009Ge_dW7gdeHDSgADG4eXCVpn5_tup-qZX4M4bY",
+              "user": {
+                "id": 3,
+                "name": "Carol White",
+                "email": "carol@example.com"
+              }
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.400Z",
+          "durationMs": 0
+        },
+        {
+          "step": "Setup: cart already populated",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 1,
+                  "subtotal": 200
+                }
+              ],
+              "total": 200
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.400Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Action: checkout",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/checkout",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "paymentMethod": false
+            }
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "paymentMethod must be 'cash' or 'credit_card'"
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.401Z",
+          "durationMs": 0
+        },
+        {
+          "step": "Verify: cart unchanged after rejected checkout",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 1,
+                  "subtotal": 200
+                }
+              ],
+              "total": 200
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.401Z",
+          "durationMs": 1
+        }
+      ],
+      "pass": true
+    },
+    {
+      "tc": "TC-05",
+      "title": "Missing payment method is rejected",
+      "partitions": [
+        "EP5"
+      ],
+      "user": "carol",
+      "value": "body {}",
+      "cart": [
+        {
+          "productId": 3,
+          "quantity": 1
+        }
+      ],
+      "checks": [
+        {
+          "label": "HTTP status",
+          "expected": 400,
+          "actual": 400,
+          "pass": true
+        },
+        {
+          "label": "error message",
+          "expected": "paymentMethod must be 'cash' or 'credit_card'",
+          "actual": "paymentMethod must be 'cash' or 'credit_card'",
+          "pass": true
+        },
+        {
+          "label": "no discount / order in response",
+          "pass": true
+        },
+        {
+          "label": "cart unchanged",
+          "expected": {
+            "items": [
+              {
+                "productId": 3,
+                "name": "USB-C Monitor",
+                "price": 200,
+                "quantity": 1,
+                "subtotal": 200
+              }
+            ],
+            "total": 200
+          },
+          "actual": {
+            "items": [
+              {
+                "productId": 3,
+                "name": "USB-C Monitor",
+                "price": 200,
+                "quantity": 1,
+                "subtotal": 200
+              }
+            ],
+            "total": 200
+          },
+          "pass": true
+        }
+      ],
+      "evidence": [
+        {
+          "step": "Setup: login as carol@example.com",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/login",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "email": "carol@example.com",
+              "password": "carol123"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjYXJvbEBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.SuU009Ge_dW7gdeHDSgADG4eXCVpn5_tup-qZX4M4bY",
+              "user": {
+                "id": 3,
+                "name": "Carol White",
+                "email": "carol@example.com"
+              }
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.402Z",
+          "durationMs": 0
+        },
+        {
+          "step": "Setup: cart already populated",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 1,
+                  "subtotal": 200
+                }
+              ],
+              "total": 200
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.402Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Action: checkout",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/checkout",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {}
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "paymentMethod must be 'cash' or 'credit_card'"
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.403Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Verify: cart unchanged after rejected checkout",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [
+                {
+                  "productId": 3,
+                  "name": "USB-C Monitor",
+                  "price": 200,
+                  "quantity": 1,
+                  "subtotal": 200
+                }
+              ],
+              "total": 200
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.404Z",
+          "durationMs": 0
+        }
+      ],
+      "pass": true
+    },
+    {
+      "tc": "TC-06",
+      "title": "Checkout of empty cart is rejected",
+      "partitions": [
+        "EP7"
+      ],
+      "user": "alice",
+      "value": "\"credit_card\" with empty cart",
+      "cart": [],
+      "checks": [
+        {
+          "label": "precondition: cart empty",
+          "expected": 0,
+          "actual": 0,
+          "pass": true
+        },
+        {
+          "label": "HTTP status",
+          "expected": 400,
+          "actual": 400,
+          "pass": true
+        },
+        {
+          "label": "error message",
+          "expected": "Cart is empty",
+          "actual": "Cart is empty",
+          "pass": true
+        },
+        {
+          "label": "no discount in response",
+          "pass": true
+        }
+      ],
+      "evidence": [
+        {
+          "step": "Setup: login as alice@example.com",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/login",
+            "headers": {
+              "Content-Type": "application/json"
+            },
+            "body": {
+              "email": "alice@example.com",
+              "password": "alice123"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbGljZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.nfJLVgh8SeYUouDoA0aDB2iPXJ2Tfx0bzUsCyUkVcQE",
+              "user": {
+                "id": 1,
+                "name": "Alice Johnson",
+                "email": "alice@example.com"
+              }
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.404Z",
+          "durationMs": 1
+        },
+        {
+          "step": "Setup: confirm cart is empty",
+          "request": {
+            "method": "GET",
+            "url": "http://localhost:3456/api/cart",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            }
+          },
+          "response": {
+            "status": 200,
+            "body": {
+              "items": [],
+              "total": 0
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.405Z",
+          "durationMs": 0
+        },
+        {
+          "step": "Action: checkout",
+          "request": {
+            "method": "POST",
+            "url": "http://localhost:3456/api/checkout",
+            "headers": {
+              "Content-Type": "application/json",
+              "Authorization": "Bearer eyJhbGciOiJIUzI1…"
+            },
+            "body": {
+              "paymentMethod": "credit_card"
+            }
+          },
+          "response": {
+            "status": 400,
+            "body": {
+              "error": "Cart is empty"
+            }
+          },
+          "timestamp": "2026-11-04T10:31:57.405Z",
+          "durationMs": 0
+        }
+      ],
+      "pass": true
+    }
+  ]
+}

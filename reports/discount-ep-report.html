@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discount EP Report</title>
+<style>
+:root {
+  --bg: #f7f7f5; --surface: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --border: #e3e2dd;
+  --pass: #1f7a4d; --pass-bg: #e3f3ea; --fail: #b42318; --fail-bg: #fde8e6;
+  --accent: #2f5bd3; --code-bg: #f1f0ec; --valid-bg: #e6edfb; --invalid-bg: #f6ece0; --invalid: #8a4b0f;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #161615; --surface: #1f1f1d; --text: #ecebe6; --muted: #9c9b95; --border: #33332f;
+    --pass: #5cc98f; --pass-bg: #173326; --fail: #ff8a7d; --fail-bg: #3a1c19;
+    --accent: #8aa8ff; --code-bg: #2a2a27; --valid-bg: #1e2a45; --invalid-bg: #3a2c1a; --invalid: #f0b56e;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #161615; --surface: #1f1f1d; --text: #ecebe6; --muted: #9c9b95; --border: #33332f;
+  --pass: #5cc98f; --pass-bg: #173326; --fail: #ff8a7d; --fail-bg: #3a1c19;
+  --accent: #8aa8ff; --code-bg: #2a2a27; --valid-bg: #1e2a45; --invalid-bg: #3a2c1a; --invalid: #f0b56e;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text);
+  font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 26px; margin: 0 0 4px; } h2 { font-size: 19px; margin: 40px 0 12px; }
+h3 { font-size: 16px; margin: 0; } h4 { font-size: 14px; margin: 18px 0 8px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+a { color: var(--accent); }
+.muted { color: var(--muted); } .small { font-size: 13px; }
+code, pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; }
+code { background: var(--code-bg); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+pre { background: var(--code-bg); padding: 12px; border-radius: 6px; margin: 0; overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin: 20px 0; }
+.stat { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px 16px; }
+.stat .n { font-size: 26px; font-weight: 600; } .stat .l { color: var(--muted); font-size: 13px; }
+.stat.pass .n { color: var(--pass); } .stat.fail .n { color: var(--fail); }
+.card, .case { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 18px; }
+.case { margin-bottom: 18px; scroll-margin-top: 12px; }
+.case header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 10px; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+th { font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); font-weight: 600; }
+.row-fail td { background: var(--fail-bg); }
+.badge { display: inline-block; padding: 2px 9px; border-radius: 999px; font-size: 12px; font-weight: 700; letter-spacing: .03em; }
+.badge.pass { background: var(--pass-bg); color: var(--pass); } .badge.fail { background: var(--fail-bg); color: var(--fail); }
+.badge.none { color: var(--muted); }
+.tag { font-size: 12px; padding: 2px 8px; border-radius: 4px; font-weight: 600; }
+.tag.valid { background: var(--valid-bg); color: var(--accent); } .tag.invalid { background: var(--invalid-bg); color: var(--invalid); }
+dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 14px; font-size: 14px; }
+dt { color: var(--muted); } dd { margin: 0; }
+.ev { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; }
+.ev summary { cursor: pointer; padding: 8px 12px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; font-size: 14px; }
+.ev-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 0 12px 12px; }
+.label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+.status { font-family: ui-monospace, monospace; font-weight: 700; font-size: 13px; margin-left: 6px; }
+.status.s2 { color: var(--pass); } .status.s4, .status.s5 { color: var(--fail); }
+.error { color: var(--fail); }
+.rule { border-left: 3px solid var(--accent); padding-left: 14px; }
+@media (max-width: 720px) { .ev-grid { grid-template-columns: 1fr; } dl { grid-template-columns: 1fr; } dt { margin-top: 6px; } }
+</style>
+</head>
+<body>
+<main>
+  <h1>Checkout discount rule · Equivalence Partitioning</h1>
+  <p class="muted">Run 2026-11-04T10:31:57.405Z · http://localhost:3456 · Node v25.2.1 · RNG seed <code>788317324</code> (rerun with <code>node tests/discount-ep.js 788317324</code>)</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">7</div><div class="l">Partitions identified</div></div>
+    <div class="stat"><div class="n">6</div><div class="l">Test cases executed</div></div>
+    <div class="stat pass"><div class="n">6</div><div class="l">Passed</div></div>
+    <div class="stat fail"><div class="n">0</div><div class="l">Failed</div></div>
+  </div>
+
+  <h2>Rule under test</h2>
+  <div class="card rule">
+    <p><strong>README business rules 1–3 / swagger <code>POST /checkout</code>:</strong></p>
+    <ul>
+      <li><code>cash</code> → 10% discount on the cart subtotal</li>
+      <li><code>credit_card</code> → no discount</li>
+      <li><code>paymentMethod</code> must be exactly <code>cash</code> or <code>credit_card</code>; anything else returns <code>400</code> (swagger: <code>enum: [cash, credit_card]</code>, required)</li>
+    </ul>
+    <p class="muted small">Technique: Equivalence Partitioning only. Inputs are <code>paymentMethod</code> and the cart subtotal the discount applies to. One value is drawn at random from inside each partition; cart contents are also random, built from the README products (Wireless Mouse 25.00, Mechanical Keyboard 80.00, USB-C Monitor 200.00) and users (alice, bob, carol). Expected values are computed from the rule, not read back from the API.</p>
+  </div>
+
+  <h2>Partitions</h2>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>ID</th><th>Input</th><th>Class</th><th>Partition</th><th>Expected behaviour</th><th>Tests</th><th>Result</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><strong>EP1</strong></td>
+      <td>paymentMethod</td>
+      <td><span class="tag valid">Valid</span></td>
+      <td>cash<div class="muted small">{ &quot;cash&quot; }</div></td>
+      <td>201, discount = 10% of subtotal, total = subtotal - discount</td>
+      <td><a href="#TC-01">TC-01</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><strong>EP2</strong></td>
+      <td>paymentMethod</td>
+      <td><span class="tag valid">Valid</span></td>
+      <td>credit_card<div class="muted small">{ &quot;credit_card&quot; }</div></td>
+      <td>201, discount = 0, total = subtotal</td>
+      <td><a href="#TC-02">TC-02</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><strong>EP3</strong></td>
+      <td>paymentMethod</td>
+      <td><span class="tag invalid">Invalid</span></td>
+      <td>String outside the allowed set<div class="muted small">any string ∉ { &quot;cash&quot;, &quot;credit_card&quot; }</div></td>
+      <td>400, no order created, cart kept</td>
+      <td><a href="#TC-03">TC-03</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><strong>EP4</strong></td>
+      <td>paymentMethod</td>
+      <td><span class="tag invalid">Invalid</span></td>
+      <td>Non-string value<div class="muted small">number, boolean, null, array, object</div></td>
+      <td>400, no order created, cart kept</td>
+      <td><a href="#TC-04">TC-04</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><strong>EP5</strong></td>
+      <td>paymentMethod</td>
+      <td><span class="tag invalid">Invalid</span></td>
+      <td>Field absent<div class="muted small">request body without paymentMethod</div></td>
+      <td>400, no order created, cart kept</td>
+      <td><a href="#TC-05">TC-05</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><strong>EP6</strong></td>
+      <td>cart subtotal</td>
+      <td><span class="tag valid">Valid</span></td>
+      <td>Subtotal &gt; 0 (non-empty cart)<div class="muted small">subtotal &gt; 0</div></td>
+      <td>discount rule is applied (covered by EP1/EP2)</td>
+      <td><a href="#TC-01">TC-01</a>, <a href="#TC-02">TC-02</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><strong>EP7</strong></td>
+      <td>cart subtotal</td>
+      <td><span class="tag invalid">Invalid</span></td>
+      <td>Subtotal = 0 (empty cart)<div class="muted small">cart has no items</div></td>
+      <td>400 &quot;Cart is empty&quot;, no discount computed</td>
+      <td><a href="#TC-06">TC-06</a></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr></tbody>
+  </table></div>
+
+  <h2>Test summary</h2>
+  <div class="card table-wrap"><table>
+    <thead><tr><th>Test</th><th>Partition(s)</th><th>Title</th><th>Random value</th><th>Result</th></tr></thead>
+    <tbody>
+    <tr>
+      <td><a href="#TC-01">TC-01</a></td>
+      <td>EP1 + EP6</td>
+      <td>Cash payment applies 10% discount</td>
+      <td><code>&quot;cash&quot;</code></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><a href="#TC-02">TC-02</a></td>
+      <td>EP2 + EP6</td>
+      <td>Credit card payment applies no discount</td>
+      <td><code>&quot;credit_card&quot;</code></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><a href="#TC-03">TC-03</a></td>
+      <td>EP3</td>
+      <td>Unknown payment method string is rejected</td>
+      <td><code>&quot;cash &quot;</code></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><a href="#TC-04">TC-04</a></td>
+      <td>EP4</td>
+      <td>Non-string payment method is rejected</td>
+      <td><code>false</code></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><a href="#TC-05">TC-05</a></td>
+      <td>EP5</td>
+      <td>Missing payment method is rejected</td>
+      <td><code>body {}</code></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr>
+    <tr>
+      <td><a href="#TC-06">TC-06</a></td>
+      <td>EP7</td>
+      <td>Checkout of empty cart is rejected</td>
+      <td><code>&quot;credit_card&quot; with empty cart</code></td>
+      <td><span class="badge pass">PASS</span></td>
+    </tr></tbody>
+  </table></div>
+
+  <h2>Test cases and evidence</h2>
+  
+    <section class="case" id="TC-01">
+      <header>
+        <h3>TC-01 · Cash payment applies 10% discount</h3>
+        <span class="badge pass">PASS</span>
+      </header>
+      <dl>
+        <dt>Partition(s)</dt><dd>EP1 + EP6</dd>
+        <dt>Value picked</dt><dd><code>&quot;cash&quot;</code></dd>
+        <dt>User</dt><dd>alice@example.com</dd>
+        <dt>Cart</dt><dd>2 × Wireless Mouse (25.00), 5 × USB-C Monitor (200.00), 5 × Mechanical Keyboard (80.00)</dd>
+      </dl>
+      
+      <div class="table-wrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead>
+        <tbody>
+      <tr class="">
+        <td>HTTP status</td><td><code>201</code></td><td><code>201</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>subtotal</td><td><code>1450</code></td><td><code>1450</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>paymentMethod echoed</td><td><code>&quot;cash&quot;</code></td><td><code>&quot;cash&quot;</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>discount (10% of 1450)</td><td><code>145</code></td><td><code>145</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>total = subtotal - discount</td><td><code>1305</code></td><td><code>1305</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr></tbody>
+      </table></div>
+      <h4>Evidence</h4>
+      
+      <details class="ev">
+        <summary><span class="step">1. Setup: login as alice@example.com</span>
+          <span class="http"><code>POST /api/login</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.324Z</div>
+<pre>POST http://localhost:3456/api/login
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;alice@example.com&quot;,
+  &quot;password&quot;: &quot;alice123&quot;
+}</pre></div>
+          <div><div class="label">Response · 63 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbGljZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.nfJLVgh8SeYUouDoA0aDB2iPXJ2Tfx0bzUsCyUkVcQE&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Alice Johnson&quot;,
+    &quot;email&quot;: &quot;alice@example.com&quot;
+  }
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">2. Setup: add product 1 x2</span>
+          <span class="http"><code>POST /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.387Z</div>
+<pre>POST http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;productId&quot;: 1,
+  &quot;quantity&quot;: 2
+}</pre></div>
+          <div><div class="label">Response · 3 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 1,
+      &quot;name&quot;: &quot;Wireless Mouse&quot;,
+      &quot;price&quot;: 25,
+      &quot;quantity&quot;: 2,
+      &quot;subtotal&quot;: 50
+    }
+  ],
+  &quot;total&quot;: 50
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">3. Setup: add product 3 x5</span>
+          <span class="http"><code>POST /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.390Z</div>
+<pre>POST http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;productId&quot;: 3,
+  &quot;quantity&quot;: 5
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 1,
+      &quot;name&quot;: &quot;Wireless Mouse&quot;,
+      &quot;price&quot;: 25,
+      &quot;quantity&quot;: 2,
+      &quot;subtotal&quot;: 50
+    },
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 5,
+      &quot;subtotal&quot;: 1000
+    }
+  ],
+  &quot;total&quot;: 1050
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">4. Setup: add product 2 x5</span>
+          <span class="http"><code>POST /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.391Z</div>
+<pre>POST http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;productId&quot;: 2,
+  &quot;quantity&quot;: 5
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 1,
+      &quot;name&quot;: &quot;Wireless Mouse&quot;,
+      &quot;price&quot;: 25,
+      &quot;quantity&quot;: 2,
+      &quot;subtotal&quot;: 50
+    },
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 5,
+      &quot;subtotal&quot;: 1000
+    },
+    {
+      &quot;productId&quot;: 2,
+      &quot;name&quot;: &quot;Mechanical Keyboard&quot;,
+      &quot;price&quot;: 80,
+      &quot;quantity&quot;: 5,
+      &quot;subtotal&quot;: 400
+    }
+  ],
+  &quot;total&quot;: 1450
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev" open>
+        <summary><span class="step">5. Action: checkout</span>
+          <span class="http"><code>POST /api/checkout</code>
+          <span class="status s2">201</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.392Z</div>
+<pre>POST http://localhost:3456/api/checkout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;paymentMethod&quot;: &quot;cash&quot;
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 201
+
+{
+  &quot;orderId&quot;: 1,
+  &quot;userId&quot;: 1,
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 1,
+      &quot;name&quot;: &quot;Wireless Mouse&quot;,
+      &quot;price&quot;: 25,
+      &quot;quantity&quot;: 2,
+      &quot;subtotal&quot;: 50
+    },
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 5,
+      &quot;subtotal&quot;: 1000
+    },
+    {
+      &quot;productId&quot;: 2,
+      &quot;name&quot;: &quot;Mechanical Keyboard&quot;,
+      &quot;price&quot;: 80,
+      &quot;quantity&quot;: 5,
+      &quot;subtotal&quot;: 400
+    }
+  ],
+  &quot;subtotal&quot;: 1450,
+  &quot;paymentMethod&quot;: &quot;cash&quot;,
+  &quot;discount&quot;: 145,
+  &quot;total&quot;: 1305,
+  &quot;createdAt&quot;: &quot;2026-11-04T10:31:57.393Z&quot;
+}</pre></div>
+        </div>
+      </details>
+    </section>
+    <section class="case" id="TC-02">
+      <header>
+        <h3>TC-02 · Credit card payment applies no discount</h3>
+        <span class="badge pass">PASS</span>
+      </header>
+      <dl>
+        <dt>Partition(s)</dt><dd>EP2 + EP6</dd>
+        <dt>Value picked</dt><dd><code>&quot;credit_card&quot;</code></dd>
+        <dt>User</dt><dd>bob@example.com</dd>
+        <dt>Cart</dt><dd>2 × Mechanical Keyboard (80.00)</dd>
+      </dl>
+      
+      <div class="table-wrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead>
+        <tbody>
+      <tr class="">
+        <td>HTTP status</td><td><code>201</code></td><td><code>201</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>subtotal</td><td><code>160</code></td><td><code>160</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>paymentMethod echoed</td><td><code>&quot;credit_card&quot;</code></td><td><code>&quot;credit_card&quot;</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>discount (0% of 160)</td><td><code>0</code></td><td><code>0</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>total = subtotal - discount</td><td><code>160</code></td><td><code>160</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr></tbody>
+      </table></div>
+      <h4>Evidence</h4>
+      
+      <details class="ev">
+        <summary><span class="step">1. Setup: login as bob@example.com</span>
+          <span class="http"><code>POST /api/login</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.393Z</div>
+<pre>POST http://localhost:3456/api/login
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;bob@example.com&quot;,
+  &quot;password&quot;: &quot;bob123&quot;
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MiwiZW1haWwiOiJib2JAZXhhbXBsZS5jb20iLCJpYXQiOjE3OTM3ODgzMTcsImV4cCI6MTc5Mzc5MTkxN30.AYNZu4-nyezOWP9qnFlMDqTT9ZYDPs311leAxozOi50&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 2,
+    &quot;name&quot;: &quot;Bob Smith&quot;,
+    &quot;email&quot;: &quot;bob@example.com&quot;
+  }
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">2. Setup: add product 2 x2</span>
+          <span class="http"><code>POST /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.394Z</div>
+<pre>POST http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;productId&quot;: 2,
+  &quot;quantity&quot;: 2
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 2,
+      &quot;name&quot;: &quot;Mechanical Keyboard&quot;,
+      &quot;price&quot;: 80,
+      &quot;quantity&quot;: 2,
+      &quot;subtotal&quot;: 160
+    }
+  ],
+  &quot;total&quot;: 160
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev" open>
+        <summary><span class="step">3. Action: checkout</span>
+          <span class="http"><code>POST /api/checkout</code>
+          <span class="status s2">201</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.395Z</div>
+<pre>POST http://localhost:3456/api/checkout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;paymentMethod&quot;: &quot;credit_card&quot;
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 201
+
+{
+  &quot;orderId&quot;: 2,
+  &quot;userId&quot;: 2,
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 2,
+      &quot;name&quot;: &quot;Mechanical Keyboard&quot;,
+      &quot;price&quot;: 80,
+      &quot;quantity&quot;: 2,
+      &quot;subtotal&quot;: 160
+    }
+  ],
+  &quot;subtotal&quot;: 160,
+  &quot;paymentMethod&quot;: &quot;credit_card&quot;,
+  &quot;discount&quot;: 0,
+  &quot;total&quot;: 160,
+  &quot;createdAt&quot;: &quot;2026-11-04T10:31:57.395Z&quot;
+}</pre></div>
+        </div>
+      </details>
+    </section>
+    <section class="case" id="TC-03">
+      <header>
+        <h3>TC-03 · Unknown payment method string is rejected</h3>
+        <span class="badge pass">PASS</span>
+      </header>
+      <dl>
+        <dt>Partition(s)</dt><dd>EP3</dd>
+        <dt>Value picked</dt><dd><code>&quot;cash &quot;</code></dd>
+        <dt>User</dt><dd>carol@example.com</dd>
+        <dt>Cart</dt><dd>1 × USB-C Monitor (200.00)</dd>
+      </dl>
+      
+      <div class="table-wrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead>
+        <tbody>
+      <tr class="">
+        <td>HTTP status</td><td><code>400</code></td><td><code>400</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>error message</td><td><code>&quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;</code></td><td><code>&quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>no discount / order in response</td><td><span class="muted">(absent)</span></td><td><span class="muted">(absent)</span></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>cart unchanged</td><td><code>{&quot;items&quot;:[{&quot;productId&quot;:3,&quot;name&quot;:&quot;USB-C Monitor&quot;,&quot;price&quot;:200,&quot;quantity&quot;:1,&quot;subtotal&quot;:200}],&quot;total&quot;:200}</code></td><td><code>{&quot;items&quot;:[{&quot;productId&quot;:3,&quot;name&quot;:&quot;USB-C Monitor&quot;,&quot;price&quot;:200,&quot;quantity&quot;:1,&quot;subtotal&quot;:200}],&quot;total&quot;:200}</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr></tbody>
+      </table></div>
+      <h4>Evidence</h4>
+      
+      <details class="ev">
+        <summary><span class="step">1. Setup: login as carol@example.com</span>
+          <span class="http"><code>POST /api/login</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.396Z</div>
+<pre>POST http://localhost:3456/api/login
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;carol@example.com&quot;,
+  &quot;password&quot;: &quot;carol123&quot;
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjYXJvbEBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.SuU009Ge_dW7gdeHDSgADG4eXCVpn5_tup-qZX4M4bY&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 3,
+    &quot;name&quot;: &quot;Carol White&quot;,
+    &quot;email&quot;: &quot;carol@example.com&quot;
+  }
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">2. Setup: add product 3 x1</span>
+          <span class="http"><code>POST /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.398Z</div>
+<pre>POST http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;productId&quot;: 3,
+  &quot;quantity&quot;: 1
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 1,
+      &quot;subtotal&quot;: 200
+    }
+  ],
+  &quot;total&quot;: 200
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev" open>
+        <summary><span class="step">3. Action: checkout</span>
+          <span class="http"><code>POST /api/checkout</code>
+          <span class="status s4">400</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.399Z</div>
+<pre>POST http://localhost:3456/api/checkout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;paymentMethod&quot;: &quot;cash &quot;
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 400
+
+{
+  &quot;error&quot;: &quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">4. Verify: cart unchanged after rejected checkout</span>
+          <span class="http"><code>GET /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.399Z</div>
+<pre>GET http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 1,
+      &quot;subtotal&quot;: 200
+    }
+  ],
+  &quot;total&quot;: 200
+}</pre></div>
+        </div>
+      </details>
+    </section>
+    <section class="case" id="TC-04">
+      <header>
+        <h3>TC-04 · Non-string payment method is rejected</h3>
+        <span class="badge pass">PASS</span>
+      </header>
+      <dl>
+        <dt>Partition(s)</dt><dd>EP4</dd>
+        <dt>Value picked</dt><dd><code>false</code></dd>
+        <dt>User</dt><dd>carol@example.com</dd>
+        <dt>Cart</dt><dd>1 × USB-C Monitor (200.00)</dd>
+      </dl>
+      
+      <div class="table-wrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead>
+        <tbody>
+      <tr class="">
+        <td>HTTP status</td><td><code>400</code></td><td><code>400</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>error message</td><td><code>&quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;</code></td><td><code>&quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>no discount / order in response</td><td><span class="muted">(absent)</span></td><td><span class="muted">(absent)</span></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>cart unchanged</td><td><code>{&quot;items&quot;:[{&quot;productId&quot;:3,&quot;name&quot;:&quot;USB-C Monitor&quot;,&quot;price&quot;:200,&quot;quantity&quot;:1,&quot;subtotal&quot;:200}],&quot;total&quot;:200}</code></td><td><code>{&quot;items&quot;:[{&quot;productId&quot;:3,&quot;name&quot;:&quot;USB-C Monitor&quot;,&quot;price&quot;:200,&quot;quantity&quot;:1,&quot;subtotal&quot;:200}],&quot;total&quot;:200}</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr></tbody>
+      </table></div>
+      <h4>Evidence</h4>
+      
+      <details class="ev">
+        <summary><span class="step">1. Setup: login as carol@example.com</span>
+          <span class="http"><code>POST /api/login</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.400Z</div>
+<pre>POST http://localhost:3456/api/login
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;carol@example.com&quot;,
+  &quot;password&quot;: &quot;carol123&quot;
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjYXJvbEBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.SuU009Ge_dW7gdeHDSgADG4eXCVpn5_tup-qZX4M4bY&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 3,
+    &quot;name&quot;: &quot;Carol White&quot;,
+    &quot;email&quot;: &quot;carol@example.com&quot;
+  }
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">2. Setup: cart already populated</span>
+          <span class="http"><code>GET /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.400Z</div>
+<pre>GET http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 1,
+      &quot;subtotal&quot;: 200
+    }
+  ],
+  &quot;total&quot;: 200
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev" open>
+        <summary><span class="step">3. Action: checkout</span>
+          <span class="http"><code>POST /api/checkout</code>
+          <span class="status s4">400</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.401Z</div>
+<pre>POST http://localhost:3456/api/checkout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;paymentMethod&quot;: false
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 400
+
+{
+  &quot;error&quot;: &quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">4. Verify: cart unchanged after rejected checkout</span>
+          <span class="http"><code>GET /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.401Z</div>
+<pre>GET http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 1,
+      &quot;subtotal&quot;: 200
+    }
+  ],
+  &quot;total&quot;: 200
+}</pre></div>
+        </div>
+      </details>
+    </section>
+    <section class="case" id="TC-05">
+      <header>
+        <h3>TC-05 · Missing payment method is rejected</h3>
+        <span class="badge pass">PASS</span>
+      </header>
+      <dl>
+        <dt>Partition(s)</dt><dd>EP5</dd>
+        <dt>Value picked</dt><dd><code>body {}</code></dd>
+        <dt>User</dt><dd>carol@example.com</dd>
+        <dt>Cart</dt><dd>1 × USB-C Monitor (200.00)</dd>
+      </dl>
+      
+      <div class="table-wrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead>
+        <tbody>
+      <tr class="">
+        <td>HTTP status</td><td><code>400</code></td><td><code>400</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>error message</td><td><code>&quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;</code></td><td><code>&quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>no discount / order in response</td><td><span class="muted">(absent)</span></td><td><span class="muted">(absent)</span></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>cart unchanged</td><td><code>{&quot;items&quot;:[{&quot;productId&quot;:3,&quot;name&quot;:&quot;USB-C Monitor&quot;,&quot;price&quot;:200,&quot;quantity&quot;:1,&quot;subtotal&quot;:200}],&quot;total&quot;:200}</code></td><td><code>{&quot;items&quot;:[{&quot;productId&quot;:3,&quot;name&quot;:&quot;USB-C Monitor&quot;,&quot;price&quot;:200,&quot;quantity&quot;:1,&quot;subtotal&quot;:200}],&quot;total&quot;:200}</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr></tbody>
+      </table></div>
+      <h4>Evidence</h4>
+      
+      <details class="ev">
+        <summary><span class="step">1. Setup: login as carol@example.com</span>
+          <span class="http"><code>POST /api/login</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.402Z</div>
+<pre>POST http://localhost:3456/api/login
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;carol@example.com&quot;,
+  &quot;password&quot;: &quot;carol123&quot;
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MywiZW1haWwiOiJjYXJvbEBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.SuU009Ge_dW7gdeHDSgADG4eXCVpn5_tup-qZX4M4bY&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 3,
+    &quot;name&quot;: &quot;Carol White&quot;,
+    &quot;email&quot;: &quot;carol@example.com&quot;
+  }
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">2. Setup: cart already populated</span>
+          <span class="http"><code>GET /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.402Z</div>
+<pre>GET http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 1,
+      &quot;subtotal&quot;: 200
+    }
+  ],
+  &quot;total&quot;: 200
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev" open>
+        <summary><span class="step">3. Action: checkout</span>
+          <span class="http"><code>POST /api/checkout</code>
+          <span class="status s4">400</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.403Z</div>
+<pre>POST http://localhost:3456/api/checkout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 400
+
+{
+  &quot;error&quot;: &quot;paymentMethod must be &#39;cash&#39; or &#39;credit_card&#39;&quot;
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">4. Verify: cart unchanged after rejected checkout</span>
+          <span class="http"><code>GET /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.404Z</div>
+<pre>GET http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [
+    {
+      &quot;productId&quot;: 3,
+      &quot;name&quot;: &quot;USB-C Monitor&quot;,
+      &quot;price&quot;: 200,
+      &quot;quantity&quot;: 1,
+      &quot;subtotal&quot;: 200
+    }
+  ],
+  &quot;total&quot;: 200
+}</pre></div>
+        </div>
+      </details>
+    </section>
+    <section class="case" id="TC-06">
+      <header>
+        <h3>TC-06 · Checkout of empty cart is rejected</h3>
+        <span class="badge pass">PASS</span>
+      </header>
+      <dl>
+        <dt>Partition(s)</dt><dd>EP7</dd>
+        <dt>Value picked</dt><dd><code>&quot;credit_card&quot; with empty cart</code></dd>
+        <dt>User</dt><dd>alice@example.com</dd>
+        <dt>Cart</dt><dd>empty</dd>
+      </dl>
+      
+      <div class="table-wrap"><table>
+        <thead><tr><th>Check</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead>
+        <tbody>
+      <tr class="">
+        <td>precondition: cart empty</td><td><code>0</code></td><td><code>0</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>HTTP status</td><td><code>400</code></td><td><code>400</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>error message</td><td><code>&quot;Cart is empty&quot;</code></td><td><code>&quot;Cart is empty&quot;</code></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr>
+      <tr class="">
+        <td>no discount in response</td><td><span class="muted">(absent)</span></td><td><span class="muted">(absent)</span></td>
+        <td><span class="badge pass">PASS</span></td>
+      </tr></tbody>
+      </table></div>
+      <h4>Evidence</h4>
+      
+      <details class="ev">
+        <summary><span class="step">1. Setup: login as alice@example.com</span>
+          <span class="http"><code>POST /api/login</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.404Z</div>
+<pre>POST http://localhost:3456/api/login
+Content-Type: application/json
+
+{
+  &quot;email&quot;: &quot;alice@example.com&quot;,
+  &quot;password&quot;: &quot;alice123&quot;
+}</pre></div>
+          <div><div class="label">Response · 1 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;token&quot;: &quot;eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiZW1haWwiOiJhbGljZUBleGFtcGxlLmNvbSIsImlhdCI6MTc5Mzc4ODMxNywiZXhwIjoxNzkzNzkxOTE3fQ.nfJLVgh8SeYUouDoA0aDB2iPXJ2Tfx0bzUsCyUkVcQE&quot;,
+  &quot;user&quot;: {
+    &quot;id&quot;: 1,
+    &quot;name&quot;: &quot;Alice Johnson&quot;,
+    &quot;email&quot;: &quot;alice@example.com&quot;
+  }
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev">
+        <summary><span class="step">2. Setup: confirm cart is empty</span>
+          <span class="http"><code>GET /api/cart</code>
+          <span class="status s2">200</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.405Z</div>
+<pre>GET http://localhost:3456/api/cart
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 200
+
+{
+  &quot;items&quot;: [],
+  &quot;total&quot;: 0
+}</pre></div>
+        </div>
+      </details>
+      <details class="ev" open>
+        <summary><span class="step">3. Action: checkout</span>
+          <span class="http"><code>POST /api/checkout</code>
+          <span class="status s4">400</span></span></summary>
+        <div class="ev-grid">
+          <div><div class="label">Request · 2026-11-04T10:31:57.405Z</div>
+<pre>POST http://localhost:3456/api/checkout
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1…
+
+{
+  &quot;paymentMethod&quot;: &quot;credit_card&quot;
+}</pre></div>
+          <div><div class="label">Response · 0 ms</div>
+<pre>HTTP 400
+
+{
+  &quot;error&quot;: &quot;Cart is empty&quot;
+}</pre></div>
+        </div>
+      </details>
+    </section>
+</main>
+</body>
+</html>
